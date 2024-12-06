@@ -18,8 +18,10 @@ const CONFIG = {
         start: 0,
         end: 378
     },
-    text: text,
-    keymaps: csv,
-    users_keymaps: csv2
+    text: text,//键位替换文本
+    keymaps: csv,//键位信息
+    users_keymaps: csv2,//用户键位信息
+    key_opacity_box: [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 1],//键位透明度分布（和下面那个都和数据分布相关）
+    key_colors: ["#F0E68C", "red"]//键位颜色分布
 }
 draw_heatmap(CONFIG);

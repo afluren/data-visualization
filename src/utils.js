@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 export function range(start, stop, step) {
     return Array.from({ length: Math.floor((stop - start) / step + 1) }, (_, i) => start + (i * step));
 }
-//数组内部元素合并
+//数组内部元素合并，专门合并键位数值的
 //TODO：这里需要实现一个数组内部元素合并的功能(f)
 export function merge_array(arr, indexS, indexE) {
     let result = [];
@@ -82,6 +82,7 @@ export function str_to_key_list(Loc, key_list, keytext_replaced) {
             arr[index].push('0');
         }
     });
+    console.log(final);//测试用
     return final;
 }
 //创建SVG画布

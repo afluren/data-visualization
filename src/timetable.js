@@ -54,7 +54,8 @@ function draw_Basic(CONFIG) {
         .attr('y', yScale(0) - 20)
         .attr('font-size', 14)
         .attr('text-anchor', 'middle')
-        .attr('fill', 'black');
+        .attr('fill', 'black')
+        .attr('pointer-events', 'none');
 
     const yLabels = Array.from({ length: 24 }, (_, i) => {
         return i < 10 ? `0${i}:00` : `${i}:00`;
@@ -68,10 +69,11 @@ function draw_Basic(CONFIG) {
         .attr('y', (d, i) => yScale(i) + (yScale(1) - yScale(0)) / 2)
         .attr('font-size', 14)
         .attr('text-anchor', 'end')
-        .attr('fill', 'black');
+        .attr('fill', 'black')
+        .attr('pointer-events', 'none');
     return [svg, xScale, yScale];
 }
-
+//获得一个小时数据的合并平均
 function data_merged_by_hour(data) {
     let data_divided_by_week = [];
     for (let i = 0; i < 7; i++) {
@@ -92,59 +94,107 @@ function data_merged_by_hour(data) {
     return data_merged_by_hour;
 }
 
-
-
-function draw_data(data, svg = null, xScale = null, yScale = null) {
-
+//这里绘制的是keyCount，
+function draw_data(data, item, svg = null, xScale = null, yScale = null) {
+    console.log(item);
     let data_in_one_line_raw = [];
     for (let i = 0; i < data.length; i++) { 
         data_in_one_line_raw.push(...data[i]);
     }
-    let data_in_one_line= data_in_one_line_raw.slice().sort((a, b) => a.keyCount - b.keyCount);
-    console.log(data_in_one_line);
-    svg.selectAll('.use-time')//TODO:这里的样式我完全没过脑子，实际上这里是要和滑动条配合的，会做的,
-        .data(data_in_one_line_raw)
-        .enter()
-        .append('rect')
-        .attr('x', (d, j) => xScale(j % 7))
-        .attr('y', (d, j) => yScale(+d.hour))
-        .attr('width', xScale(1) - xScale(0))
-        .attr('height', yScale(1) - yScale(0))
-        .attr('fill', (d) => {
-            if (d.keyCount > 1000) {
-                return 'red';
-            } else if (d.keyCount > 500) {
-                return 'orange';
-            } else {
-                return 'none';
-            }
-        })
-        .attr('opacity', 0.8)
-        .attr('stroke', 'none')
-        .attr('class', 'use-time');
-
-    svg.append('rect')
-        .attr('class', 'slider-path')
-        .attr('x', xScale(0))
-        .attr('y', yScale(24))
-        .attr('width', xScale(7) - xScale(0))
-        .attr('height', svg.attr('height') - yScale(24))
-        .attr('fill', 'gray')
-        .attr('opacity', 0.2)
-        .attr('stroke', 'none');
-
+    let data_in_one_line= data_in_one_line_raw.slice().sort((a, b) => a[item] - b[item]);
+    // console.log(data_in_one_line);
+    //TODO:这里的样式我完全没过脑子，实际上这里是要和滑动条配合的，会做的；以及使用了无脑的if-else，后续也许会做成根据数据的切分
+    var use_time = svg.selectAll('.use-time');
+    if (!use_time.empty()) {
+        use_time.attr('x', (d, j) => xScale(j % 7))
+            .attr('y', (d, j) => yScale(+d.hour))
+            .attr('width', xScale(1) - xScale(0))
+            .attr('height', yScale(1) - yScale(0))
+            .attr('fill', (d) => {
+                if (d[item] > 1000) {
+                    return 'red';
+                } else if (d[item] > 500) {
+                    return 'orange';
+                } else {
+                    return 'none';
+                }
+            })
+            .attr('opacity', 0.8)
+            .attr('stroke', 'none')
+            .attr('class', 'use-time');
+    } else { 
+        use_time
+            .data(data_in_one_line_raw)
+            .enter()
+            .append('rect')
+            .attr('x', (d, j) => xScale(j % 7))
+            .attr('y', (d, j) => yScale(+d.hour))
+            .attr('width', xScale(1) - xScale(0))
+            .attr('height', yScale(1) - yScale(0))
+            .attr('fill', (d) => {
+                if (d[item] > 1000) {
+                    return 'red';
+                } else if (d[item] > 500) {
+                    return 'orange';
+                } else {
+                    return 'none';
+                }
+            })
+            .attr('opacity', 0.8)
+            .attr('stroke', 'none')
+            .attr('class', 'use-time');
+    }
+    
+    var select_rect = d3.select('.slider-rect');
     let gragging = false;
-    svg.append('rect')
-        .attr('class', 'slider-rect')
-        .attr('x', xScale(0))
-        .attr('y', yScale(24))
-        .attr('width', xScale(1) - xScale(0))
-        .attr('height', svg.attr('height') - yScale(24))
-        .attr('fill', 'green')
-        .attr('opacity', 1)
-        .attr('stroke', 'none')
-        .attr('cursor', 'pointer')
-        .on("mousedown", (event) => {
+    if (select_rect.empty()) {
+        svg.append('rect')
+            .attr('class', 'slider-path')
+            .attr('x', xScale(0))
+            .attr('y', yScale(24))
+            .attr('width', xScale(7) - xScale(0))
+            .attr('height', svg.attr('height') - yScale(24))
+            .attr('fill', 'gray')
+            .attr('opacity', 0.2)
+            .attr('stroke', 'none');
+
+        svg.append('rect')
+            .attr('class', 'slider-rect')
+            .attr('x', xScale(0))
+            .attr('y', yScale(24))
+            .attr('width', xScale(1) - xScale(0))
+            .attr('height', svg.attr('height') - yScale(24))
+            .attr('fill', 'green')
+            .attr('opacity', 1)
+            .attr('stroke', 'none')
+            .attr('cursor', 'pointer')
+            .on("mousedown", (event) => {
+                console.log('down!');
+                gragging = true;
+                const x = d3.pointer(event)[0];
+                let rect = d3.select(event.target);
+                let diff = x - rect.attr("x");
+                d3.select("body").on("mousemove", (ev) => {
+                    if (gragging) {
+                        rect.attr('x', Math.max(xScale(0), Math.min(d3.pointer(ev)[0] - 150 - diff, xScale(7) - rect.attr("width"))));
+                        let display_rate = +rect.attr('x') / (xScale(7) - xScale(0));
+                        svg.selectAll('.use-time')
+                            .attr('fill', (d) => {
+                                if (+d[item] > +data_in_one_line[Math.round((1 + display_rate) / 2 * (data_in_one_line.length - 1))][item]) {
+                                    return 'red';
+                                } else if (+d[item] > +data_in_one_line[Math.round(display_rate * (data_in_one_line.length - 1))][item]) {
+                                    return 'orange';
+                                } else {
+                                    return 'none';
+                                }
+                            });
+                    }
+                });
+            });
+    } else {
+        select_rect.attr('x', xScale(0))
+            .attr('y', yScale(24))
+            .on("mousedown", (event) => {
             console.log('down!');
             gragging = true;
             const x = d3.pointer(event)[0];
@@ -153,14 +203,12 @@ function draw_data(data, svg = null, xScale = null, yScale = null) {
             d3.select("body").on("mousemove", (ev) => {
                 if (gragging) {
                     rect.attr('x', Math.max(xScale(0), Math.min(d3.pointer(ev)[0] - 150 - diff, xScale(7) - rect.attr("width"))));
-                    let display_rate = +rect.attr('x')/(xScale(7) - xScale(0));
+                    let display_rate = +rect.attr('x') / (xScale(7) - xScale(0));
                     svg.selectAll('.use-time')
                         .attr('fill', (d) => {
-                            if (+d.keyCount > +data_in_one_line[Math.round((1 + display_rate) / 2 * (data_in_one_line.length - 1))].keyCount) {
-                                console.log(`red_line: ${data_in_one_line[Math.round((1 + display_rate) / 2 * (data_in_one_line.length - 1))].keyCount}`);
-                                console.log(`current_value: ${d.keyCount}`);
+                            if (+d[item] > +data_in_one_line[Math.round((1 + display_rate) / 2 * (data_in_one_line.length - 1))][item]) {
                                 return 'red';
-                            } else if (+d.keyCount > +data_in_one_line[Math.round(display_rate * (data_in_one_line.length - 1))].keyCount) {
+                            } else if (+d[item] > +data_in_one_line[Math.round(display_rate * (data_in_one_line.length - 1))][item]) {
                                 return 'orange';
                             } else {
                                 return 'none';
@@ -169,6 +217,7 @@ function draw_data(data, svg = null, xScale = null, yScale = null) {
                 }
             });
         });
+    }
         
         d3.select("body").on("mouseup", () => {
             console.log('up!');
@@ -181,7 +230,9 @@ function draw_data(data, svg = null, xScale = null, yScale = null) {
 }
 function draw_main(CONFIG) {
     const [svg, xScale, yScale] = draw_Basic(CONFIG);
+    let class_list = ['keyCount','mouseCount','distance'];
     d3.csv(csv).then((data) => {
+        
         console.log(data);
         let year = '2024';
         let month = '01';
@@ -211,7 +262,24 @@ function draw_main(CONFIG) {
         });
         console.log(result);
         result = data_merged_by_hour(result);
-        draw_data(result, svg, xScale, yScale);
+        draw_data(result, 'keyCount', svg, xScale, yScale);
+        for (let i = 0; i < 3; i++){
+            console.log(class_list[i]);
+            d3.select('body').append('div')
+                .text(class_list[i])
+                .style('position', 'absolute')
+                .style('top', `20px`)
+                .style('left', `${i * 100 + 20}px`)
+                .style('display', 'inline-block')
+                .style('font-size', '10px')
+                .style('height', '20px')
+                .style('width', '100px')
+                .style('border', '1px solid black')
+                .attr('class', `${class_list[i]}-title`)
+                .on('click', (event) => {
+                    draw_data(result, class_list[i], svg, xScale, yScale);
+                });
+        }
     });
 
 }
